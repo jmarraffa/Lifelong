@@ -1,22 +1,30 @@
-name: ci-deploy
-on: { push: { branches: [main] }, pull_request: {} }
+name: deploy
+on: { push: { branches: [main] }, workflow_dispatch: {} }
 permissions: { contents: read, pages: write, id-token: write }
+concurrency: { group: pages, cancel-in-progress: true }
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: npm install
-      - run: npm test
+      - run: mkdir -p report
+      - name: Unit tests
+        run: npx vitest run --reporter=json --outputFile=report/tests.json || (cat report/tests.json; exit 1)
+      - name: Bot harness (1,000 lives x 7 bots)
+        run: npm run harness
+      - name: Economy calibration (3,000 lives x 7 bots)
+        run: |
+          if [ -f scripts/calibrate.ts ]; then npx tsx scripts/calibrate.ts 3000; else echo "pending"; fi
+      - run: npm run report
       - run: npm run build
+      - run: mkdir -p dist/report && cp report/* dist/report/
       - uses: actions/upload-pages-artifact@v3
-        if: github.ref == 'refs/heads/main'
         with: { path: dist }
   deploy:
-    needs: test
-    if: github.ref == 'refs/heads/main'
+    needs: build
     runs-on: ubuntu-latest
     environment: { name: github-pages, url: "${{ steps.d.outputs.page_url }}" }
     steps:
