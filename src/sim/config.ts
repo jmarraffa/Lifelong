@@ -33,8 +33,8 @@ export const CONFIG = {
       finance:   { needs: "business", l5NeedsMasterOr15y: true,  steps: [62000, 80000, 105000, 140000, 190000] },
       education: { needs: "bachelor", l5NeedsMasterOr15y: true,  steps: [46000, 54000, 63000, 72000, 82000] },
     } as Record<Career, Ladder>,
-    promoMinMonths: [36, 48, 60, 72],                 // months in level before the next step is possible [A]
-    promoBaseBps: 1900, promoStepBps: 500, promoCapBps: 4500, // [A]
+    promoMinMonths: [24, 36, 48, 60],                 // months in level before the next step is possible [A]
+    promoBaseBps: 2000, promoStepBps: 500, promoCapBps: 4500, // [A]
     l5ExperienceMonths: 180,                          // 15 years in track
     raiseBps: 75,                                     // yearly real raise when not promoted [A]
   },
@@ -46,11 +46,13 @@ export const CONFIG = {
   cashflow: {
     lifestyle: {                                      // living = max(floor, share x take-home); rent is separate
       frugal:      { floor: 1500, shareBps: 5000 },
-      standard:    { floor: 2100, shareBps: 6500 },   // 65% vs 60% is a founder decision due 10-20
+      standard:    { floor: 2100, shareBps: 6000 },   // 60%, CEO-approved 10-13
       comfortable: { floor: 3000, shareBps: 8500 },
     } as Record<Lifestyle, { floor: number; shareBps: number }>,
     savingsRealBps: 100,                              // placeholder until the Market system (v0.5)
-    overdraftRealBps: 1900,                           // [S] copy sheet v2 §5
+    overdraftRealBps: 1200,      // 12% real/yr on negative cash only [A] Felix 10-13
+    overdraftLimit: 10000,       // [A] at/over this, forced Frugal + Room (Money Rescue)
+    overdraftHardCap: 25000,     // [A] cash never below -this; excess forgiven. Student loan is never forgiven
   },
   tax: {                                              // 2026 single filer, federal only
     standardDeduction: 16100,

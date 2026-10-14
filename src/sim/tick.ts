@@ -1,7 +1,7 @@
 // tick.ts
 import { CONFIG } from "./config";
 import { drawMonth } from "./rng";
-import { LifeState, Choice, newLife, applyChoice, housingSystem, educationSystem, careerSystem, cashflowSystem, netWorth } from "./systems";
+import { LifeState, Choice, newLife, applyChoice, housingSystem, educationSystem, careerSystem, cashflowSystem, moneyTroubleSystem, overdraftCapSystem, netWorth } from "./systems";
 
 export const isDone = (s: LifeState) => s.month >= (CONFIG.endAge - CONFIG.startAge) * 12; // 564
 
@@ -14,7 +14,9 @@ export function tick(s: LifeState): LifeState {
   n = housingSystem(n);
   n = educationSystem(n, u);
   n = careerSystem(n, u);
+  n = moneyTroubleSystem(n);
   n = cashflowSystem(n, studying);
+  n = overdraftCapSystem(n);
   return { ...n, month: n.month + 1, history: n.history.concat(netWorth(n)) };
 }
 

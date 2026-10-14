@@ -15,6 +15,9 @@ export interface LifeState {
   lifestyle: Lifestyle; home: Home;
   history: number[];                              // net worth after each month
   choiceLog: Choice[];
+  writeOffs: number;    // total overdraft debt forgiven, whole USD
+  downshifts: number;   // Money Rescue episodes
+  rescue: boolean;      // true from the forced downshift until cash >= 0
 }
 
 const has = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
@@ -32,7 +35,7 @@ export function newLife(seed: number): LifeState {
     cash: CONFIG.startCash, loan: 0, loanPayment: 0,
     education: "none", major: null, eduMonthsLeft: 0,
     career: null, level: 0, salary: 0, monthsInLevel: 0, monthsInTrack: 0,
-    lifestyle: "standard", home: "family", history: [], choiceLog: [],
+    lifestyle: "standard", home: "family", history: [], choiceLog: [], writeOffs: 0, downshifts: 0, rescue: false,
   };
 }
 
@@ -134,4 +137,20 @@ export function cashflowSystem(s: LifeState, studying: boolean): LifeState {
     cash: s.cash + net - living - rent - pay + cashInterest,
     loan: owes ? s.loan + interest - pay : s.loan,
   };
+}
+
+/** Any month. Not studying and cash <= -limit: force Frugal, and Room share unless still with family. Once per episode. */
+export function moneyTroubleSystem(s: LifeState): LifeState {
+  const CF = CONFIG.cashflow;
+  if (s.rescue && s.cash >= 0) return { ...s, rescue: false };      // episode over; no auto-restore
+  if (s.rescue || s.eduMonthsLeft > 0 || s.cash > -CF.overdraftLimit) return s;
+  const home: Home = s.home === "family" ? "family" : "room";
+  return { ...s, lifestyle: "frugal", home, rescue: true, downshifts: s.downshifts + 1 };
+}
+
+/** After each month's cashflow: cash below -cap is forgiven up to the cap. s.loan is never touched. */
+export function overdraftCapSystem(s: LifeState): LifeState {
+  const cap = CONFIG.cashflow.overdraftHardCap;
+  if (s.cash >= -cap) return s;
+  return { ...s, writeOffs: s.writeOffs + (-cap - s.cash), cash: -cap };
 }
